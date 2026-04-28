@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type EncodingMode int
 
@@ -22,6 +25,20 @@ func isNumeric(text string) bool {
 	return true
 }
 
+func isAlphanumeric(text string) bool {
+	const specialsChars = "$%*+-./: "
+
+	for _, char := range text {
+		if !(char >= '0' && char <= '9') &&
+			!(char >= 'A' && char <= 'Z') &&
+			!strings.ContainsRune(specialsChars, char) {
+			return false
+		}
+	}
+
+	return true
+}
+
 func determineEncodingMode(textToEncode string) EncodingMode {
 	if len(textToEncode) == 0 {
 		return InvalidMode
@@ -31,15 +48,17 @@ func determineEncodingMode(textToEncode string) EncodingMode {
 		return NumericMode
 	}
 
+	if isAlphanumeric(textToEncode) {
+		return AlphanumericMode
+	}
+
 	return InvalidMode
 }
 
 func main() {
-	test1 := determineEncodingMode("")
-	test2 := determineEncodingMode("1029")
-	test3 := determineEncodingMode("wasd")
-
-	fmt.Println("Test 1: ", test1)
-	fmt.Println("Test 2: ", test2)
-	fmt.Println("Test 3: ", test3)
+	fmt.Println(isAlphanumeric("HELLO123"))
+	fmt.Println(isAlphanumeric("Hello123"))
+	fmt.Println(isAlphanumeric("HELLO$%*"))
+	fmt.Println(isAlphanumeric("HELLO WORLD"))
+	fmt.Println(isAlphanumeric("HELLO@WORLD"))
 }
