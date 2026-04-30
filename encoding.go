@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -11,9 +10,19 @@ const (
 	NumericMode EncodingMode = iota
 	AlphanumericMode
 	ByteMode
-	KanjiMode
 	InvalidMode
 )
+
+type ErrorCorrectionLevel string
+
+const (
+	LevelL ErrorCorrectionLevel = "L"
+	LevelM ErrorCorrectionLevel = "M"
+	LevelQ ErrorCorrectionLevel = "Q"
+	LevelH ErrorCorrectionLevel = "H"
+)
+
+const QrVersion = 1
 
 func isNumeric(text string) bool {
 	for _, char := range text {
@@ -52,13 +61,8 @@ func determineEncodingMode(textToEncode string) EncodingMode {
 		return AlphanumericMode
 	}
 
-	return InvalidMode
+	return ByteMode
 }
 
 func main() {
-	fmt.Println(isAlphanumeric("HELLO123"))
-	fmt.Println(isAlphanumeric("Hello123"))
-	fmt.Println(isAlphanumeric("HELLO$%*"))
-	fmt.Println(isAlphanumeric("HELLO WORLD"))
-	fmt.Println(isAlphanumeric("HELLO@WORLD"))
 }
