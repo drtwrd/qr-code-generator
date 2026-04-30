@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -13,6 +14,20 @@ const (
 	InvalidMode
 )
 
+func (m EncodingMode) Indicator() string {
+	switch m {
+	case NumericMode:
+		return "0001"
+	case AlphanumericMode:
+		return "0010"
+	case ByteMode:
+		return "0100"
+	default:
+		return "0000"
+	}
+
+}
+
 type ErrorCorrectionLevel string
 
 const (
@@ -23,6 +38,15 @@ const (
 )
 
 const QrVersion = 1
+
+func getModeIndicator(mode EncodingMode) string {
+	return mode.Indicator()
+}
+
+func getCharCountIndicator(mode EncodingMode, version int, textLength int) string {
+	// For alphanumeric mode and verison 1 needs 9 bits long
+	return fmt.Sprintf("%09b", textLength)
+}
 
 func isNumeric(text string) bool {
 	for _, char := range text {
@@ -65,4 +89,7 @@ func determineEncodingMode(textToEncode string) EncodingMode {
 }
 
 func main() {
+	test := "HELLO WORLD"
+	fmt.Println(getModeIndicator(AlphanumericMode))
+	fmt.Println(getCharCountIndicator(AlphanumericMode, QrVersion, len(test)))
 }
