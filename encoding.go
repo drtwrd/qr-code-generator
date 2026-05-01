@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -44,8 +45,41 @@ func getModeIndicator(mode EncodingMode) string {
 }
 
 func getCharCountIndicator(mode EncodingMode, version int, textLength int) string {
-	// For alphanumeric mode and verison 1 needs 9 bits long
-	return fmt.Sprintf("%09b", textLength)
+	bits := 0
+
+	if version >= 1 && version <= 9 {
+		switch mode {
+		case NumericMode:
+			bits = 10
+		case AlphanumericMode:
+			bits = 9
+		case ByteMode:
+			bits = 8
+		}
+	} else if version >= 10 && version <= 26 {
+		switch mode {
+		case NumericMode:
+			bits = 12
+		case AlphanumericMode:
+			bits = 11
+		case ByteMode:
+			bits = 16
+		}
+	} else if version >= 27 && version <= 40 {
+		switch mode {
+		case NumericMode:
+			bits = 14
+		case AlphanumericMode:
+			bits = 13
+		case ByteMode:
+			bits = 16
+		}
+	} else {
+		return ""
+	}
+
+	format := "%0" + strconv.Itoa(bits) + "b"
+	return fmt.Sprintf(format, textLength)
 }
 
 func encodeInAlphanumericMode(text string) string {
@@ -159,12 +193,9 @@ func determineEncodingMode(textToEncode string) EncodingMode {
 }
 
 func main() {
-	test := "HELLO WORLD"
-	modeIndicator := getModeIndicator(AlphanumericMode)
-	charCountIndicator := getCharCountIndicator(AlphanumericMode, QrVersion, 11)
-	textEncodedInAlphanumericMode := encodeInAlphanumericMode(test)
+	test1 := getCharCountIndicator(NumericMode, 1, 11)
+	test2 := getCharCountIndicator(AlphanumericMode, 1, 11)
 
-	encocedText := modeIndicator + charCountIndicator + textEncodedInAlphanumericMode
-
-	fmt.Println(encocedText)
+	fmt.Println("Numeric (should be 10 bits):", test1)
+	fmt.Println("Alphanumeric (should be 9 bits):", test2)
 }
