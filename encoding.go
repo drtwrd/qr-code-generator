@@ -82,6 +82,28 @@ func getCharCountIndicator(mode EncodingMode, version int, textLength int) strin
 	return fmt.Sprintf(format, textLength)
 }
 
+func encodeInNumericMode(text string) string {
+	var encodedText strings.Builder
+
+	for i := 0; i < len(text); i += 3 {
+		group := text[i:min(i+3, len(text))]
+		length := len(group)
+
+		num, _ := strconv.Atoi(group)
+
+		switch length {
+		case 3:
+			fmt.Fprintf(&encodedText, "%010b", num)
+		case 2:
+			fmt.Fprintf(&encodedText, "%07b", num)
+		case 1:
+			fmt.Fprintf(&encodedText, "%04b", num)
+		}
+	}
+
+	return encodedText.String()
+}
+
 func encodeInAlphanumericMode(text string) string {
 	alphanumericTable := map[rune]int{
 		'0': 0,
