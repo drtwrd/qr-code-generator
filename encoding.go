@@ -174,6 +174,17 @@ func encodeInAlphanumericMode(text string) string {
 	return encodedText.String()
 }
 
+func encodeInByteMode(text string) string {
+	var encodedText strings.Builder
+
+	for _, char := range text {
+		charToBinary := fmt.Sprintf("%08b", char)
+		fmt.Fprintf(&encodedText, charToBinary)
+	}
+
+	return encodedText.String()
+}
+
 func isNumeric(text string) bool {
 	for _, char := range text {
 		if char < '0' || char > '9' {
@@ -215,9 +226,7 @@ func determineEncodingMode(textToEncode string) EncodingMode {
 }
 
 func main() {
-	test1 := getCharCountIndicator(NumericMode, 1, 11)
-	test2 := getCharCountIndicator(AlphanumericMode, 1, 11)
-
-	fmt.Println("Numeric (should be 10 bits):", test1)
-	fmt.Println("Alphanumeric (should be 9 bits):", test2)
+	test := encodeInByteMode("ABC")
+	expected := "010000010100001001000011"
+	fmt.Println(test == expected)
 }
