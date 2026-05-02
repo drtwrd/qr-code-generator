@@ -185,6 +185,35 @@ func encodeInByteMode(text string) string {
 	return encodedText.String()
 }
 
+func addPadBytes(binaryString string, totalBits int) string {
+	var outputBinary strings.Builder
+	outputBinary.WriteString(binaryString)
+
+	// Add a Terminator of 0s if Necessary
+	remaining := totalBits - len(binaryString)
+	if remaining > 0 {
+		terminatorBits := min(remaining, 4)
+		outputBinary.WriteString(strings.Repeat("0", terminatorBits))
+	}
+
+	// Add More 0s to Make the Length a Multiple of 8
+	remainder := len(outputBinary.String()) % 8
+	if remainder != 0 {
+		zeroesToAdd := 8 - remainder
+		outputBinary.WriteString(strings.Repeat("0", zeroesToAdd))
+	}
+
+	// Add Pad Bytes if the String is Still too Short
+	for len(outputBinary.String()) < totalBits {
+		outputBinary.WriteString("11101100") // 236
+		if len(outputBinary.String()) < totalBits {
+			outputBinary.WriteString("00010001") // 17
+		}
+	}
+
+	return outputBinary.String()
+}
+
 func isNumeric(text string) bool {
 	for _, char := range text {
 		if char < '0' || char > '9' {
@@ -226,7 +255,18 @@ func determineEncodingMode(textToEncode string) EncodingMode {
 }
 
 func main() {
-	test := encodeInByteMode("ABC")
-	expected := "010000010100001001000011"
-	fmt.Println(test == expected)
+	// HELLO WORLD (74 bits)
+	data := "00100000010110110000101101111000110100010111001011011100010011010100001101"
+
+	// 104 bits
+	expected := "00100000010110110000101101111000110100010111001011011100010011010100001101000000111011000001000111101100"
+	expectedLength := len(expected)
+
+	// Version 1, Level M = 104 bits
+	padded := addPadBytes(data, 104)
+
+	fmt.Println("Length after padding:", len(padded))
+	fmt.Println(expectedLength == len(padded))
+	fmt.Println("Padding:", padded)
+	fmt.Println(expected == padded)
 }
