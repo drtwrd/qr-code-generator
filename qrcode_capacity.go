@@ -1,6 +1,6 @@
 package main
 
-var capacity = map[int]map[ErrorCorrectionLevel]map[EncodingMode]int{
+var QrCapacityByVersionErrLevelMode = map[int]map[ErrorCorrectionLevel]map[EncodingMode]int{
 	1: {
 		LevelL: {NumericMode: 41, AlphanumericMode: 25, ByteMode: 17},
 		LevelM: {NumericMode: 34, AlphanumericMode: 20, ByteMode: 14},
@@ -240,5 +240,248 @@ var capacity = map[int]map[ErrorCorrectionLevel]map[EncodingMode]int{
 		LevelM: {NumericMode: 5596, AlphanumericMode: 3391, ByteMode: 2331},
 		LevelQ: {NumericMode: 3993, AlphanumericMode: 2420, ByteMode: 1663},
 		LevelH: {NumericMode: 3057, AlphanumericMode: 1852, ByteMode: 1273},
+	},
+}
+
+var TotalCapacityBits = map[int]map[ErrorCorrectionLevel]int{
+	1: {
+		LevelL: 152,
+		LevelM: 128,
+		LevelQ: 104,
+		LevelH: 72,
+	},
+	2: {
+		LevelL: 272,
+		LevelM: 224,
+		LevelQ: 176,
+		LevelH: 128,
+	},
+	3: {
+		LevelL: 440,
+		LevelM: 352,
+		LevelQ: 272,
+		LevelH: 208,
+	},
+	4: {
+		LevelL: 640,
+		LevelM: 512,
+		LevelQ: 384,
+		LevelH: 288,
+	},
+	5: {
+		LevelL: 864,
+		LevelM: 688,
+		LevelQ: 496,
+		LevelH: 368,
+	},
+	6: {
+		LevelL: 1088,
+		LevelM: 864,
+		LevelQ: 608,
+		LevelH: 480,
+	},
+	7: {
+		LevelL: 1248,
+		LevelM: 992,
+		LevelQ: 704,
+		LevelH: 528,
+	},
+	8: {
+		LevelL: 1552,
+		LevelM: 1232,
+		LevelQ: 880,
+		LevelH: 688,
+	},
+	9: {
+		LevelL: 1856,
+		LevelM: 1456,
+		LevelQ: 1056,
+		LevelH: 800,
+	},
+	10: {
+		LevelL: 2192,
+		LevelM: 1728,
+		LevelQ: 1232,
+		LevelH: 976,
+	},
+	11: {
+		LevelL: 2592,
+		LevelM: 2032,
+		LevelQ: 1456,
+		LevelH: 1120,
+	},
+	12: {
+		LevelL: 2960,
+		LevelM: 2320,
+		LevelQ: 1680,
+		LevelH: 1264,
+	},
+	13: {
+		LevelL: 3424,
+		LevelM: 2672,
+		LevelQ: 1936,
+		LevelH: 1456,
+	},
+	14: {
+		LevelL: 3688,
+		LevelM: 2920,
+		LevelQ: 2088,
+		LevelH: 1568,
+	},
+	15: {
+		LevelL: 4184,
+		LevelM: 3320,
+		LevelQ: 2360,
+		LevelH: 1784,
+	},
+	16: {
+		LevelL: 4712,
+		LevelM: 3624,
+		LevelQ: 2600,
+		LevelH: 2024,
+	},
+	17: {
+		LevelL: 5176,
+		LevelM: 4056,
+		LevelQ: 2936,
+		LevelH: 2264,
+	},
+	18: {
+		LevelL: 5768,
+		LevelM: 4504,
+		LevelQ: 3176,
+		LevelH: 2504,
+	},
+	19: {
+		LevelL: 6360,
+		LevelM: 5016,
+		LevelQ: 3560,
+		LevelH: 2728,
+	},
+	20: {
+		LevelL: 6888,
+		LevelM: 5352,
+		LevelQ: 3880,
+		LevelH: 3080,
+	},
+	21: {
+		LevelL: 7456,
+		LevelM: 5712,
+		LevelQ: 4096,
+		LevelH: 3248,
+	},
+	22: {
+		LevelL: 8048,
+		LevelM: 6256,
+		LevelQ: 4544,
+		LevelH: 3536,
+	},
+	23: {
+		LevelL: 8752,
+		LevelM: 6880,
+		LevelQ: 4912,
+		LevelH: 3712,
+	},
+	24: {
+		LevelL: 9392,
+		LevelM: 7312,
+		LevelQ: 5312,
+		LevelH: 4112,
+	},
+	25: {
+		LevelL: 10208,
+		LevelM: 8000,
+		LevelQ: 5744,
+		LevelH: 4304,
+	},
+	26: {
+		LevelL: 10960,
+		LevelM: 8496,
+		LevelQ: 6032,
+		LevelH: 4768,
+	},
+	27: {
+		LevelL: 11744,
+		LevelM: 9024,
+		LevelQ: 6464,
+		LevelH: 5024,
+	},
+	28: {
+		LevelL: 12248,
+		LevelM: 9544,
+		LevelQ: 6968,
+		LevelH: 5288,
+	},
+	29: {
+		LevelL: 13048,
+		LevelM: 10136,
+		LevelQ: 7288,
+		LevelH: 5608,
+	},
+	30: {
+		LevelL: 13880,
+		LevelM: 10984,
+		LevelQ: 7880,
+		LevelH: 5960,
+	},
+	31: {
+		LevelL: 14744,
+		LevelM: 11640,
+		LevelQ: 8264,
+		LevelH: 6344,
+	},
+	32: {
+		LevelL: 15640,
+		LevelM: 12328,
+		LevelQ: 8920,
+		LevelH: 6760,
+	},
+	33: {
+		LevelL: 16568,
+		LevelM: 13048,
+		LevelQ: 9368,
+		LevelH: 7208,
+	},
+	34: {
+		LevelL: 17528,
+		LevelM: 13800,
+		LevelQ: 9848,
+		LevelH: 7688,
+	},
+	35: {
+		LevelL: 18448,
+		LevelM: 14496,
+		LevelQ: 10288,
+		LevelH: 7888,
+	},
+	36: {
+		LevelL: 19472,
+		LevelM: 15312,
+		LevelQ: 10832,
+		LevelH: 8432,
+	},
+	37: {
+		LevelL: 20528,
+		LevelM: 15936,
+		LevelQ: 11440,
+		LevelH: 8768,
+	},
+	38: {
+		LevelL: 21616,
+		LevelM: 16816,
+		LevelQ: 11952,
+		LevelH: 9136,
+	},
+	39: {
+		LevelL: 22496,
+		LevelM: 17728,
+		LevelQ: 12496,
+		LevelH: 9776,
+	},
+	40: {
+		LevelL: 23648,
+		LevelM: 18672,
+		LevelQ: 13328,
+		LevelH: 10208,
 	},
 }
