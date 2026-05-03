@@ -15,7 +15,11 @@ func createEmptyMatrix(size int) [][]int {
 func printMatrix(matrix [][]int) {
 	for _, row := range matrix {
 		for _, cell := range row {
-			fmt.Printf("%2d", cell)
+			if cell == 1 {
+				fmt.Print("██")
+			} else {
+				fmt.Print("  ")
+			}
 		}
 		fmt.Println()
 	}
@@ -64,10 +68,37 @@ func addFinderPatterns(matrix [][]int) {
 	}
 }
 
+// For version 1 (21x21), alignment patterns are not required.
+// TODO: implement for versions 2 and higher
+func addAlignmentPatterns(matrix [][]int) {}
+
+func addTimingPatterns(matrix [][]int) {
+	size := len(matrix)
+
+	// Horizontal timing pattern
+	for i := 8; i < size-8; i++ {
+		if i%2 == 0 {
+			matrix[6][i] = 1
+		} else {
+			matrix[6][i] = 0
+		}
+	}
+
+	// Vertical timing pattern
+	for j := 8; j < size-8; j++ {
+		if j%2 == 0 {
+			matrix[j][6] = 1
+		} else {
+			matrix[j][6] = 0
+		}
+	}
+}
+
 func main() {
 	matrix := createEmptyMatrix(21)
 
 	addFinderPatterns(matrix)
+	addTimingPatterns(matrix)
 
 	printMatrix(matrix)
 }
