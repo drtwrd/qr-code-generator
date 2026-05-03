@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -37,8 +38,6 @@ const (
 	LevelQ ErrorCorrectionLevel = "Q"
 	LevelH ErrorCorrectionLevel = "H"
 )
-
-const QrVersion = 1
 
 func getModeIndicator(mode EncodingMode) string {
 	return mode.Indicator()
@@ -254,19 +253,12 @@ func determineEncodingMode(textToEncode string) EncodingMode {
 	return ByteMode
 }
 
-func main() {
-	// HELLO WORLD (74 bits)
-	data := "00100000010110110000101101111000110100010111001011011100010011010100001101"
-
-	// 104 bits
-	expected := "00100000010110110000101101111000110100010111001011011100010011010100001101000000111011000001000111101100"
-	expectedLength := len(expected)
-
-	// Version 1, Level M = 104 bits
-	padded := addPadBytes(data, 104)
-
-	fmt.Println("Length after padding:", len(padded))
-	fmt.Println(expectedLength == len(padded))
-	fmt.Println("Padding:", padded)
-	fmt.Println(expected == padded)
+func determineSmallestVersion(mode EncodingMode, ecLevel ErrorCorrectionLevel, textLength int) (int, error) {
+	for version := 1; version <= 40; version++ {
+		maxCapacity := QrCapacityByVersionErrLevelMode[version][ecLevel][mode]
+		if textLength <= maxCapacity {
+			return version, nil
+		}
+	}
+	return 0, errors.New("data too long for QR code version 40")
 }
