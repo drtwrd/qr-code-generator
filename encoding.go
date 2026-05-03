@@ -262,3 +262,54 @@ func determineSmallestVersion(mode EncodingMode, ecLevel ErrorCorrectionLevel, t
 	}
 	return 0, errors.New("data too long for QR code version 40")
 }
+
+func encodeData(text string) (string, error) {
+	const errLevel ErrorCorrectionLevel = LevelM
+
+	mode := determineEncodingMode(text)
+	if mode == InvalidMode {
+		return "", errors.New("Occured an empty string")
+	}
+
+	version, err := determineSmallestVersion(mode, errLevel, len(text))
+	if err != nil {
+		return "", err
+	}
+
+	modeIndicator := mode.Indicator()
+	charCountIndicator := getCharCountIndicator(mode, version, len(text))
+
+	var textToBinary strings.Builder
+	textToBinary.WriteString(modeIndicator)
+	textToBinary.WriteString(charCountIndicator)
+
+	switch mode {
+	case NumericMode:
+		textToBinary.WriteString(encodeInNumericMode(text))
+	case AlphanumericMode:
+		textToBinary.WriteString(encodeInAlphanumericMode(text))
+	case ByteMode:
+		textToBinary.WriteString(encodeInByteMode(text))
+	}
+
+	totalBits := TotalCapacityBits[version][errLevel]
+	encodedText := addPadBytes(textToBinary.String(), totalBits)
+
+	return encodedText, nil
+}
+
+func main() {
+	test1 := "HELLO WORLD"
+	et1, err1 := encodeData(test1)
+	if err1 != nil {
+		panic(err1)
+	}
+	fmt.Println(et1)
+
+	test2 := "Hello world"
+	et2, err2 := encodeData(test2)
+	if err2 != nil {
+		panic(err2)
+	}
+	fmt.Println(et2)
+}
