@@ -297,19 +297,3 @@ func encodeData(text string) (string, error) {
 
 	return encodedText, nil
 }
-
-func main() {
-	test1 := "HELLO WORLD"
-	et1, err1 := encodeData(test1)
-	if err1 != nil {
-		panic(err1)
-	}
-	fmt.Println(et1)
-
-	test2 := "Hello world"
-	et2, err2 := encodeData(test2)
-	if err2 != nil {
-		panic(err2)
-	}
-	fmt.Println(et2)
-}
