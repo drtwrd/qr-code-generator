@@ -1,6 +1,8 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func createEmptyMatrix(size int) [][]int {
 	matrix := make([][]int, size)
@@ -89,7 +91,7 @@ func canBeDrawn(x, y, size int) bool {
 
 func addAlignmentPatterns(matrix [][]int) {
 	size := len(matrix)
-	version := ((size - 21) / 4) + 1
+	version := getVersion(size)
 
 	// Alignment patterns are not required for version 1
 	if version == 1 {
@@ -145,12 +147,26 @@ func addTimingPatterns(matrix [][]int) {
 	}
 }
 
+func getVersion(size int) int {
+	version := ((size - 21) / 4) + 1
+
+	return version
+}
+
+func addDarkSquare(matrix [][]int) {
+	size := len(matrix)
+	version := getVersion(size)
+
+	matrix[(4*version)+9][8] = 1
+}
+
 func main() {
 	matrix := createEmptyMatrix(25)
 
 	addFinderPatterns(matrix)
 	addAlignmentPatterns(matrix)
 	addTimingPatterns(matrix)
+	addDarkSquare(matrix)
 
 	printMatrix(matrix)
 }
