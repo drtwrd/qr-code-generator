@@ -16,9 +16,9 @@ func printMatrix(matrix [][]int) {
 	for _, row := range matrix {
 		for _, cell := range row {
 			if cell == 1 {
-				fmt.Print("██")
-			} else {
 				fmt.Print("  ")
+			} else {
+				fmt.Print("██")
 			}
 		}
 		fmt.Println()
@@ -68,9 +68,60 @@ func addFinderPatterns(matrix [][]int) {
 	}
 }
 
-// For version 1 (21x21), alignment patterns are not required.
-// TODO: implement for versions 2 and higher
-func addAlignmentPatterns(matrix [][]int) {}
+func canBeDrawn(x, y, size int) bool {
+	// Handle top left finder + separator
+	if y <= 7 && x <= 7 {
+		return false
+	}
+
+	// Handle top right finder + separator
+	if y <= 7 && x >= size-8 {
+		return false
+	}
+
+	// Handle bottom left finder + separator
+	if y >= size-8 && x <= 7 {
+		return false
+	}
+
+	return true
+}
+
+func addAlignmentPatterns(matrix [][]int) {
+	size := len(matrix)
+	version := ((size - 21) / 4) + 1
+
+	// Alignment patterns are not required for version 1
+	if version == 1 {
+		return
+	}
+
+	squaresToDraw := [][]int{}
+	squaresCenters := alignmentCenters[version]
+	for _, row := range squaresCenters {
+		for _, col := range squaresCenters {
+			canDraw := canBeDrawn(row, col, size)
+			if canDraw {
+				squaresToDraw = append(squaresToDraw, []int{row, col})
+			}
+		}
+	}
+
+	for _, center := range squaresToDraw {
+		row, col := center[0], center[1]
+
+		matrix[row][col] = 1
+
+		for i := row - 2; i <= row+2; i++ {
+			for j := col - 2; j <= col+2; j++ {
+				if i == row-2 || i == row+2 || j == col-2 || j == col+2 {
+					matrix[i][j] = 1
+				}
+			}
+		}
+	}
+
+}
 
 func addTimingPatterns(matrix [][]int) {
 	size := len(matrix)
@@ -95,9 +146,10 @@ func addTimingPatterns(matrix [][]int) {
 }
 
 func main() {
-	matrix := createEmptyMatrix(21)
+	matrix := createEmptyMatrix(25)
 
 	addFinderPatterns(matrix)
+	addAlignmentPatterns(matrix)
 	addTimingPatterns(matrix)
 
 	printMatrix(matrix)
