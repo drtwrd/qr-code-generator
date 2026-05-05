@@ -18,9 +18,9 @@ func printMatrix(matrix [][]int) {
 	for _, row := range matrix {
 		for _, cell := range row {
 			if cell == 1 {
-				fmt.Print("  ")
+				fmt.Print("\033[48;5;16m  \033[0m")
 			} else {
-				fmt.Print("██")
+				fmt.Print("\033[48;5;231m  \033[0m")
 			}
 		}
 		fmt.Println()
@@ -160,13 +160,74 @@ func addDarkSquare(matrix [][]int) {
 	matrix[(4*version)+9][8] = 1
 }
 
+// TODO: Reserve the Version Information Area
+// QR codes versions 7 and larger must contain two areas where version information bits are placed.
+// The areas are a 6x3 block above the bottom-left finder pattern and a 3x6 block to the left of the top-right finder pattern.
+func isFinderZone(row, col, size int) bool {
+	// Top-left
+	if row <= 7 && col <= 7 {
+		return true
+	}
+
+	// Top-right
+	if row <= 7 && col >= size-8 {
+		return true
+	}
+
+	// Bottom-left
+	if row >= size-8 && col <= 7 {
+		return true
+	}
+
+	return false
+}
+
+func putBits(matrix [][]int, row int, col int, bits []rune, bitIndex *int) {
+	if !isFinderZone(row, col, len(matrix)) && matrix[row][col] == 0 && *bitIndex < len(bits) {
+		matrix[row][col] = int(bits[*bitIndex] - '0')
+		*bitIndex++
+	}
+
+	if !isFinderZone(row, col, len(matrix)) && col-1 >= 0 && matrix[row][col-1] == 0 && *bitIndex < len(bits) {
+		matrix[row][col-1] = int(bits[*bitIndex] - '0')
+		*bitIndex++
+	}
+}
+
+func placeDataBits(text string, matrix [][]int) {
+	bitString, err := encodeData(text)
+	if err != nil {
+		panic(err)
+	}
+	bits := []rune(bitString)
+	bitIndex := 0
+
+	size := len(matrix)
+	goUp := true
+
+	for col := size - 1; col >= 0; col -= 2 {
+		if goUp {
+			for row := size - 1; row >= 0; row-- {
+				putBits(matrix, row, col, bits, &bitIndex)
+			}
+		} else {
+			for row := range size {
+				putBits(matrix, row, col, bits, &bitIndex)
+			}
+		}
+		goUp = !goUp
+	}
+}
+
 func main() {
-	matrix := createEmptyMatrix(25)
+	matrix := createEmptyMatrix(21)
 
 	addFinderPatterns(matrix)
 	addAlignmentPatterns(matrix)
 	addTimingPatterns(matrix)
 	addDarkSquare(matrix)
+
+	placeDataBits("IT WORKS", matrix)
 
 	printMatrix(matrix)
 }
