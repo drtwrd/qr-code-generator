@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 )
 
 func createEmptyMatrix(size int) [][]int {
@@ -14,8 +16,24 @@ func createEmptyMatrix(size int) [][]int {
 	return matrix
 }
 
-func printMatrix(matrix [][]int) {
+func printZeroesAndOnes(matrix [][]int) {
 	for _, row := range matrix {
+		for _, cell := range row {
+			fmt.Printf("%d ", cell)
+		}
+		fmt.Println()
+	}
+}
+
+func printMatrix(matrix [][]int) {
+	quietZone := 4
+
+	for range quietZone {
+		fmt.Printf("%s\n", strings.Repeat("\033[48;5;231m  \033[0m", quietZone*2+len(matrix)))
+	}
+
+	for _, row := range matrix {
+		fmt.Print(strings.Repeat("\033[48;5;231m  \033[0m", quietZone))
 		for _, cell := range row {
 			if cell == 1 {
 				fmt.Print("\033[48;5;16m  \033[0m")
@@ -23,7 +41,11 @@ func printMatrix(matrix [][]int) {
 				fmt.Print("\033[48;5;231m  \033[0m")
 			}
 		}
-		fmt.Println()
+		fmt.Printf("%s\n", strings.Repeat("\033[48;5;231m  \033[0m", quietZone))
+	}
+
+	for range quietZone {
+		fmt.Printf("%s\n", strings.Repeat("\033[48;5;231m  \033[0m", quietZone*2+len(matrix)))
 	}
 }
 
@@ -153,7 +175,7 @@ func getVersion(size int) int {
 	return version
 }
 
-func addDarkSquare(matrix [][]int) {
+func addDarkModule(matrix [][]int) {
 	size := len(matrix)
 	version := getVersion(size)
 
@@ -163,32 +185,56 @@ func addDarkSquare(matrix [][]int) {
 // TODO: Reserve the Version Information Area
 // QR codes versions 7 and larger must contain two areas where version information bits are placed.
 // The areas are a 6x3 block above the bottom-left finder pattern and a 3x6 block to the left of the top-right finder pattern.
-func isFinderZone(row, col, size int) bool {
-	// Top-left
-	if row <= 7 && col <= 7 {
+func isReservedArea(row, col, version, size int) bool {
+	// Finder patterns + separators (всегда)
+	if (row <= 8 && col <= 8) ||
+		(row <= 8 && col >= size-8) ||
+		(row >= size-8 && col <= 8) {
 		return true
 	}
 
-	// Top-right
-	if row <= 7 && col >= size-8 {
-		return true
-	}
-
-	// Bottom-left
-	if row >= size-8 && col <= 7 {
-		return true
+	if version >= 7 {
+		// Top-right area (6x3)
+		if row <= 5 && col >= size-11 && col <= size-9 {
+			return true
+		}
+		// Bottom-left area (3x6)
+		if col <= 5 && row >= size-11 && row <= size-9 {
+			return true
+		}
 	}
 
 	return false
 }
 
 func putBits(matrix [][]int, row int, col int, bits []rune, bitIndex *int) {
-	if !isFinderZone(row, col, len(matrix)) && matrix[row][col] == 0 && *bitIndex < len(bits) {
+	size := len(matrix)
+	version := getVersion(size)
+
+	if *bitIndex >= len(bits) {
+		return
+	}
+
+	skipped := 0
+	if isReservedArea(row, col, version, size) {
+		skipped++
+	}
+	if col-1 >= 0 && isReservedArea(row, col-1, version, size) {
+		skipped++
+	}
+	if skipped == 2 {
+		fmt.Printf("WARNING: both cells in pair (%d,%d) and (%d,%d) are reserved\n", row, col, row, col-1)
+	}
+
+	if !isReservedArea(row, col, version, size) && *bitIndex < len(bits) {
 		matrix[row][col] = int(bits[*bitIndex] - '0')
 		*bitIndex++
 	}
 
-	if !isFinderZone(row, col, len(matrix)) && col-1 >= 0 && matrix[row][col-1] == 0 && *bitIndex < len(bits) {
+	if *bitIndex >= len(bits) {
+		return
+	}
+	if col-1 >= 0 && !isReservedArea(row, col-1, version, size) && *bitIndex < len(bits) {
 		matrix[row][col-1] = int(bits[*bitIndex] - '0')
 		*bitIndex++
 	}
@@ -219,15 +265,78 @@ func placeDataBits(text string, matrix [][]int) {
 	}
 }
 
-func main() {
-	matrix := createEmptyMatrix(21)
+func getMatrixSize(version int) int {
+	return ((version - 1) * 4) + 21
+}
+
+func GenerateQRCode(text string) ([][]int, error) {
+	mode := determineEncodingMode(text)
+	if mode == InvalidMode {
+		return nil, errors.New("Invalid encoding mode")
+	}
+
+	ecLevel := LevelM
+
+	version, err := determineSmallestVersion(mode, ecLevel, len(text))
+	if err != nil {
+		return nil, err
+	}
+
+	size := getMatrixSize(version)
+	matrix := createEmptyMatrix(size)
 
 	addFinderPatterns(matrix)
-	addAlignmentPatterns(matrix)
 	addTimingPatterns(matrix)
-	addDarkSquare(matrix)
+	if version >= 2 {
+		addAlignmentPatterns(matrix)
+	}
+	addDarkModule(matrix)
 
-	placeDataBits("IT WORKS", matrix)
+	placeDataBits(text, matrix)
+
+	return matrix, nil
+}
+func compareWithExpected(matrix [][]int) {
+	expected := [][]int{
+		{1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1},
+		{1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1},
+		{1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1},
+		{1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1},
+		{1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1},
+		{1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1},
+		{1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	}
+	for i := range 21 {
+		for j := range 21 {
+			if matrix[i][j] != expected[i][j] {
+				fmt.Printf("First mismatch at (%d,%d): got %d, expected %d\n", i, j, matrix[i][j], expected[i][j])
+				return
+			}
+		}
+	}
+	fmt.Println("Matrix matches expected!")
+}
+func main() {
+	matrix, err := GenerateQRCode("HELLO WORLD")
+	if err != nil {
+		panic(err)
+	}
 
 	printMatrix(matrix)
+	// printZeroesAndOnes(matrix)
+	compareWithExpected(matrix)
 }
