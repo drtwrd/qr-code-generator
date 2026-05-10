@@ -16,15 +16,6 @@ func createEmptyMatrix(size int) [][]int {
 	return matrix
 }
 
-func printZeroesAndOnes(matrix [][]int) {
-	for _, row := range matrix {
-		for _, cell := range row {
-			fmt.Printf("%d ", cell)
-		}
-		fmt.Println()
-	}
-}
-
 func printMatrix(matrix [][]int) {
 	quietZone := 4
 
@@ -182,15 +173,20 @@ func addDarkModule(matrix [][]int) {
 	matrix[(4*version)+9][8] = 1
 }
 
-// TODO: Reserve the Version Information Area
-// QR codes versions 7 and larger must contain two areas where version information bits are placed.
-// The areas are a 6x3 block above the bottom-left finder pattern and a 3x6 block to the left of the top-right finder pattern.
 func isReservedArea(row, col, version, size int) bool {
-	// Finder patterns + separators (всегда)
+	// Finder patterns + separators
 	if (row <= 8 && col <= 8) ||
 		(row <= 8 && col >= size-8) ||
 		(row >= size-8 && col <= 8) {
 		return true
+	}
+
+	// Timing patterns
+	if row == 6 || col == 6 {
+		if (row == 6 && col > 8 && col < size-8) ||
+			(col == 6 && row > 8 && row < size-8) {
+			return true
+		}
 	}
 
 	if version >= 7 {
@@ -214,19 +210,7 @@ func putBits(matrix [][]int, row int, col int, bits []rune, bitIndex *int) {
 	if *bitIndex >= len(bits) {
 		return
 	}
-
-	skipped := 0
-	if isReservedArea(row, col, version, size) {
-		skipped++
-	}
-	if col-1 >= 0 && isReservedArea(row, col-1, version, size) {
-		skipped++
-	}
-	if skipped == 2 {
-		fmt.Printf("WARNING: both cells in pair (%d,%d) and (%d,%d) are reserved\n", row, col, row, col-1)
-	}
-
-	if !isReservedArea(row, col, version, size) && *bitIndex < len(bits) {
+	if !isReservedArea(row, col, version, size) && matrix[row][col] == 0 && *bitIndex < len(bits) {
 		matrix[row][col] = int(bits[*bitIndex] - '0')
 		*bitIndex++
 	}
@@ -234,7 +218,7 @@ func putBits(matrix [][]int, row int, col int, bits []rune, bitIndex *int) {
 	if *bitIndex >= len(bits) {
 		return
 	}
-	if col-1 >= 0 && !isReservedArea(row, col-1, version, size) && *bitIndex < len(bits) {
+	if col-1 >= 0 && !isReservedArea(row, col-1, version, size) && matrix[row][col-1] == 0 && *bitIndex < len(bits) {
 		matrix[row][col-1] = int(bits[*bitIndex] - '0')
 		*bitIndex++
 	}
@@ -296,47 +280,11 @@ func GenerateQRCode(text string) ([][]int, error) {
 
 	return matrix, nil
 }
-func compareWithExpected(matrix [][]int) {
-	expected := [][]int{
-		{1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1},
-		{1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1},
-		{1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1},
-		{1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1},
-		{1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1},
-		{1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1},
-		{1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1},
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-	}
-	for i := range 21 {
-		for j := range 21 {
-			if matrix[i][j] != expected[i][j] {
-				fmt.Printf("First mismatch at (%d,%d): got %d, expected %d\n", i, j, matrix[i][j], expected[i][j])
-				return
-			}
-		}
-	}
-	fmt.Println("Matrix matches expected!")
-}
+
 func main() {
 	matrix, err := GenerateQRCode("HELLO WORLD")
 	if err != nil {
 		panic(err)
 	}
-
 	printMatrix(matrix)
-	// printZeroesAndOnes(matrix)
-	compareWithExpected(matrix)
 }
